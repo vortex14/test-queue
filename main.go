@@ -173,7 +173,9 @@ func (b *broker) handleGet(w http.ResponseWriter, r *http.Request, q *queue) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(msg))
+	if _, err := w.Write([]byte(msg)); err != nil {
+		q.put(msg)
+	}
 }
 
 func (b *broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
