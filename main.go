@@ -104,8 +104,12 @@ func (q *queue) get(ctx context.Context, timeout time.Duration) (string, bool) {
 		return msg, true
 
 	case <-ctx.Done():
-		q.cancelWaiter(w)
-		return "", false
+		if q.cancelWaiter(w) {
+			return "", false
+		}
+
+		msg := <-w.ch
+		return msg, true
 	}
 }
 
@@ -128,6 +132,11 @@ func (b *broker) getQueue(name string) *queue {
 	}
 
 	b.mu.Lock()
+	if q = b.queues[name]; q != nil {
+		b.mu.Unlock()
+		return q
+	}
+
 	q = &queue{}
 	b.queues[name] = q
 	b.mu.Unlock()
